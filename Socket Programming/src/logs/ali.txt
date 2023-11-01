@@ -1,6 +1,0 @@
-Username set.
-restaurant opened
-new user entered
-info sent
-order rejected. not enought ingredients
-d

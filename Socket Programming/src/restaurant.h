@@ -55,6 +55,8 @@ void handle_show_requests_cmd(UserData* user_data);
 void handle_show_sales_cmd(UserData* user_data);
 void answer_request(UserData* user_data);
 int find_ingredient_index(char* ingredient_name);
-Food* find_food_by_name(Menu* menu, char* food_name);               
+Food* find_food_by_name(Menu* menu, char* food_name);   
+bool has_pending_request();        
+bool has_ingredients(Food* food);    
 
 #endif

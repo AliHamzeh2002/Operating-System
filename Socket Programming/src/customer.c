@@ -38,6 +38,10 @@ void handle_close_restaurant_msg(MsgData msg_data, UserData* user_data){
     write_log("a restaurant closed.\n", user_data);
 }
 
+void set_timeout(int sig){
+    customer_data.is_request_timeout = true;
+}
+
 void handle_order_food_cmd(UserData* user_data){
     write(1, ASK_PORT_RESTAURANT, strlen(ASK_PORT_RESTAURANT));
     char port_str[PORT_LENGTH];
@@ -56,18 +60,29 @@ void handle_order_food_cmd(UserData* user_data){
     char* msg = (char*)malloc(msg_size * sizeof(char));
     assert(msg != NULL);
     sprintf(msg, msg_format, food_name, user_data->username, user_data->tcp_port);
-    write(1, msg, strlen(msg));
+    //write(1, msg, strlen(msg));
     write(1, WAITING_RESPONSE_MSG, strlen(WAITING_RESPONSE_MSG));
-    signal(SIGALRM, show_timeout_msg);
+    customer_data.is_request_timeout = false;
+    signal(SIGALRM, set_timeout);
     siginterrupt(SIGALRM, 1);
-    const char* response = NULL;
     alarm(REQUEST_MAX_WAIT_SENDER);
     const int fd = connect_tcp_client(restaurant_port);
+    if (fd < 0){
+        write(1, CONNECTION_ERROR, strlen(CONNECTION_ERROR));
+        write_log(CONNECTION_ERROR, user_data);
+        alarm(0);
+        return;
+    }
     send_tcp_msg(fd, msg, MAX_SEND_TRIES);
-    response = receive_tcp(fd);
-    
+    char* response = receive_tcp(fd);
     alarm(0);
-    if (strcmp(response, REJECT_RES) == 0){
+    if (customer_data.is_request_timeout){
+        write(1, TIMEOUT_MSG, strlen(TIMEOUT_MSG));
+        write_log("request timeout\n", user_data);
+        close(fd);
+        return;
+    }
+    else if (strcmp(response, REJECT_RES) == 0){
         write(1, REQUEST_DENIED, strlen(REQUEST_DENIED));
         write_log(REQUEST_DENIED, user_data);
 
@@ -76,10 +91,7 @@ void handle_order_food_cmd(UserData* user_data){
         write(1, REQUEST_ACCEPTED, strlen(REQUEST_ACCEPTED));
         write_log(REQUEST_ACCEPTED, user_data);
     }
-    else{
-        send_tcp_msg(fd, "close-fd", MAX_SEND_TRIES);
-        write_log("request timeout\n", user_data);
-    }
+    
     close(fd);
     
 }

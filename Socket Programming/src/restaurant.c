@@ -20,7 +20,7 @@ void init_ingredients(UserData* user_data){
                 restaurant_data.ingredients = (Ingredient*)realloc(restaurant_data.ingredients, restaurant_data.size_of_ingredients * sizeof(Ingredient));
             }
             restaurant_data.ingredients[restaurant_data.num_of_ingredients].name = user_data->menu->foods[i]->ingredients[j].name;
-            restaurant_data.ingredients[restaurant_data.num_of_ingredients].quantity = 0;
+            restaurant_data.ingredients[restaurant_data.num_of_ingredients].quantity = INIT_INGREDIENT_NUM;
             restaurant_data.num_of_ingredients++;            
         }
     }
@@ -67,9 +67,21 @@ void start_restaurant(UserData* user_data){
     
 }
 
+bool has_pending_request(){
+    for (int i = 0; i < restaurant_data.num_of_orders; i++){
+        if (restaurant_data.orders[i].status == PENDING)
+            return true;
+    }
+    return false;
+}
+
 void close_restaurant(UserData* user_data){
     if (!restaurant_data.is_open)
         return;
+    if (has_pending_request()){
+        write(1, CANT_CLOSE_MSG, strlen(CANT_CLOSE_MSG));
+        return;
+    }
     restaurant_data.is_open = false;
     const char* msg_format =
             "close-restaurant\n"                // title
@@ -306,6 +318,12 @@ void handle_request_ingredient_cmd(UserData* user_data){
     siginterrupt(SIGALRM, 1);
     alarm(REQUEST_MAX_WAIT_SENDER);
     const int fd = connect_tcp_client(supplier_port);
+    if (fd < 0){
+        write(1, CONNECTION_ERROR, strlen(CONNECTION_ERROR));
+        write_log(CONNECTION_ERROR, user_data);
+        alarm(0);
+        return;
+    }
     send_tcp_msg(fd, msg, MAX_SEND_TRIES);
     const char* response = receive_tcp(fd);
     alarm(0);

@@ -1,9 +1,0 @@
-Username set.
-show restaurant request sent
-restaurant info received.
-request accepted.
-new user entered
-a restaurant opened.
-show restaurant request sent
-restaurant info received.
-request accepted.

@@ -9,7 +9,7 @@
 #include <stdbool.h>
 
 static struct {
-    //Menu* menu;
+    bool is_request_timeout;
 
 } customer_data;
 
@@ -21,6 +21,7 @@ void handle_order_food_cmd(UserData* user_data);
 void handle_post_restaurants_msg(MsgData msg_data, UserData* user_data);
 void handle_open_restaurant_msg(MsgData msg_data, UserData* user_data);
 void handle_close_restaurant_msg(MsgData msg_data, UserData* user_data);
+void set_timeout(int sig);
 
 #endif
 

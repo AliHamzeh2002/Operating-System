@@ -27,6 +27,8 @@
 #define REQUEST_TIMEOUT_LOG "request timeout.\n"
 #define NEW_USER_LOG "new user entered.\n"
 #define SUPPLIER_BUSY_MSG "supplier is busy\n"
+#define CONNECTION_ERROR "error in connecting. port may be wrong\n"
+#define CANT_CLOSE_MSG "you have pending requests.\n"
 #define DELIMITERS " \n"
 #define MAX_NAME_SIZE 1024
 #define MAX_INPUT_SIZE 4096
