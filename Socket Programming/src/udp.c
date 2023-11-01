@@ -1,19 +1,5 @@
 #include "udp.h"
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <asm/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdbool.h>
-
-#include "consts.h"
-
-
 int make_udp_socket(){
     int broadcast = 1, reuse_port = 1;
 

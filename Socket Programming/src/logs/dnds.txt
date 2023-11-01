@@ -1,0 +1,9 @@
+Username set.
+restaurant opened
+new user entered
+info sent
+new order
+show request cmd
+request denied
+order timeout
+show sales cmd

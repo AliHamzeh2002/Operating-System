@@ -1,0 +1,4 @@
+Username set.
+show restaurant request sent
+restaurant info received.
+request denied.
