@@ -28,7 +28,6 @@ std::vector<std::string> find_buildings(std::string starting_path){
 }
 
 std::vector<std::string> read_space_separated_input(std::string msg){
-    std::cout << msg << std::endl;
     std::string input;
     getline(std::cin, input);
     std::istringstream iss(input);
@@ -42,9 +41,9 @@ std::vector<std::string> read_space_separated_input(std::string msg){
 }
 
 void print_vector(std::string name, std::vector<std::string> vec){
-    std::cout << name << ": " << std::endl;
+    std::cout << name << ": " << "\n";
     for (int i = 0; i < vec.size(); i++){
-        std::cout << "\t" << i + 1 << "- " << vec[i] << std::endl;
+        std::cout << "\t" << i + 1 << "- " << vec[i] << "\n";
     }
 }
 
@@ -52,7 +51,6 @@ std::vector<std::string> make_fifo_files(std::vector<std::string> wanted_buildin
     std::vector<std::string> fifo_files;
     for (int i = 0; i < wanted_buildings.size(); i++){
         std::string fifo_file = "/tmp/" + wanted_buildings[i] + ".fifo";
-        std::cout << fifo_file << std::endl;
         if (mkfifo(fifo_file.c_str(), 0666) == -1){
             logger.log_error("Failed to make fifo file");
             exit(EXIT_FAILURE);
@@ -62,23 +60,23 @@ std::vector<std::string> make_fifo_files(std::vector<std::string> wanted_buildin
     return fifo_files;
 }
 
-std::vector<pid_t> run_buildings_processes(std::string starting_path, int month, std::vector<std::string> wanted_buildings, std::vector<std::string> wanted_resources){
-    std::vector<pid_t> children_pids;
+std::vector<ChildData> run_buildings_processes(std::string starting_path, int month, std::vector<std::string> wanted_buildings, std::vector<std::string> wanted_resources){
+    std::vector<ChildData> children_data;
     for (auto building_name : wanted_buildings){
         int write_pipe;
-        run_new_process(BUILDING_EXECUTABLE, write_pipe, logger);
+        int read_pipe;
+        pid_t child_pid = run_new_process(BUILDING_EXECUTABLE, write_pipe, read_pipe, logger);
         int num_of_resources = wanted_resources.size();
-        
         std::string pipe_data = starting_path + " " + building_name + " " + std::to_string(month) + " " + std::to_string(num_of_resources);
         for (auto resource : wanted_resources){
             pipe_data += " " + resource;
         }
         write(write_pipe, pipe_data.c_str(), pipe_data.size());
-        std::cout << "Writing to pipe: " << pipe_data << std::endl;
         close(write_pipe);
+        children_data.push_back({child_pid, read_pipe});
         logger.log_info("Building %s process made", building_name.c_str());
     }
-    return children_pids;
+    return children_data;
 }
 
 void remove_fifo_files(std::vector<std::string>& fifo_files){
@@ -91,11 +89,12 @@ void remove_fifo_files(std::vector<std::string>& fifo_files){
 }
 
 void run_workers(std::string starting_path, int month, std::vector<std::string> wanted_buildings, std::vector<std::string> wanted_resources){
-    std::vector<pid_t> children_pids;
+    std::vector<ChildData> children_data;
     std::vector<std::string> fifo_files = make_fifo_files(wanted_buildings);
-    children_pids = run_buildings_processes(starting_path, month, wanted_buildings, wanted_resources);
-    wait_for_children(children_pids, logger);
+    children_data = run_buildings_processes(starting_path, month, wanted_buildings, wanted_resources);
+    wait_for_children(children_data, logger);
     remove_fifo_files(fifo_files);
+    print_children_outputs(children_data);
 }
 
 int main(int argc, char* argv[]){

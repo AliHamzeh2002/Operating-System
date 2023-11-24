@@ -18,25 +18,25 @@ void Logger::set_logger_name(std::string logger_name){
 }
 
 void Logger::log_msg(const std::string& msg_fmt, va_list& args){
-    vprintf(msg_fmt.c_str(), args);
+    vfprintf(stderr, msg_fmt.c_str(), args);
 }
 
 void Logger::log_info(const std::string& msg_fmt, ...){
-    std::cout << Color::GRN << "[INFO] " << this->logger_name << ": ";
+    std::cerr << Color::GRN << "[INFO] " << this->logger_name << ": ";
     va_list args;
     va_start(args, msg_fmt);
     log_msg(msg_fmt, args);
     va_end(args);
-    std::cout << Color::RST << std::endl;
+    std::cerr << Color::RST << "\n";
 }
 
 void Logger::log_error(const std::string& msg_fmt, ...){
-    std::cout << Color::RED << "[ERROR] " << this->logger_name << ": ";
+    std::cerr << Color::RED << "[ERROR] " << this->logger_name << ": ";
     va_list args;
     va_start(args, msg_fmt);
     log_msg(msg_fmt, args);
     va_end(args);
-    std::cout << Color::RST << std::endl;
+    std::cerr << Color::RST << "\n";
 }
 
 void Logger::log_error(){
