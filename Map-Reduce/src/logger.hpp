@@ -2,12 +2,16 @@
 #define LOGGER_HPP
 
 #include <string>
+#include <cstdarg>
 
 class Logger{
     public:
         Logger(std::string logger_name);
-        void log_info(std::string msg);
-        void log_error(std::string msg);
+        Logger();
+        void set_logger_name(std::string logger_name);
+        void log_msg(const std::string& msg_fmt, va_list& args);
+        void log_info(const std::string& msg_fmt, ...);
+        void log_error(const std::string& msg_fmt, ...);
         void log_error();
     private:
         std::string logger_name;

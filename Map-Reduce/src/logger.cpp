@@ -2,18 +2,41 @@
 #include "color.hpp"
 #include <iostream>
 #include <cstring>
+#include <cerrno>
 
 
 Logger::Logger(std::string logger_name){
     this->logger_name = logger_name;
 }
 
-void Logger::log_info(std::string msg){
-    std::cout << Color::GRN << "[INFO] " << this->logger_name << ": " << msg << Color::RST << std::endl;
+Logger::Logger(){
+
 }
 
-void Logger::log_error(std::string msg){
-    std::cout << Color::RED << "[ERROR] " << this->logger_name << ": " << msg << Color::RST << std::endl;
+void Logger::set_logger_name(std::string logger_name){
+    this->logger_name = logger_name;
+}
+
+void Logger::log_msg(const std::string& msg_fmt, va_list& args){
+    vprintf(msg_fmt.c_str(), args);
+}
+
+void Logger::log_info(const std::string& msg_fmt, ...){
+    std::cout << Color::GRN << "[INFO] " << this->logger_name << ": ";
+    va_list args;
+    va_start(args, msg_fmt);
+    log_msg(msg_fmt, args);
+    va_end(args);
+    std::cout << Color::RST << std::endl;
+}
+
+void Logger::log_error(const std::string& msg_fmt, ...){
+    std::cout << Color::RED << "[ERROR] " << this->logger_name << ": ";
+    va_list args;
+    va_start(args, msg_fmt);
+    log_msg(msg_fmt, args);
+    va_end(args);
+    std::cout << Color::RST << std::endl;
 }
 
 void Logger::log_error(){
