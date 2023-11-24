@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include "logger.hpp"
+#include "utils.cpp"
 
 static std::vector<std::string> RECOURSES = {"Gas", "Electricity", "Water"};
 const static char* BUILDING_EXECUTABLE = "./building.out";
@@ -61,61 +62,23 @@ std::vector<std::string> make_fifo_files(std::vector<std::string> wanted_buildin
     return fifo_files;
 }
 
-pid_t run_new_process(const char* executable, int& write_pipe){
-    int pipe_fd[2];
-    if (pipe(pipe_fd) == -1){
-            logger.log_error("Failed to make pipe");
-            exit(EXIT_FAILURE);
-    }
-    pid_t pid = fork();
-    if (pid == -1){
-        logger.log_error("Failed to fork");
-        exit(EXIT_FAILURE);
-    }
-    if (pid == 0){
-        close(pipe_fd[1]);
-        dup2(pipe_fd[0], STDIN_FILENO);
-        close(pipe_fd[0]);
-        execl(executable, executable, nullptr);
-        logger.log_error("Failed to execute building");
-        exit(EXIT_FAILURE);
-    }
-    else{
-        close(pipe_fd[0]);
-        write_pipe = pipe_fd[1];
-    }
-    close(pipe_fd[0]);
-    return pid;
-}
-
-std::vector<pid_t> run_buildings_processes(std::string starting_path, std::vector<std::string> wanted_buildings, std::vector<std::string> fifo_files){
-    std::vector<pid_t> child_pids;
+std::vector<pid_t> run_buildings_processes(std::string starting_path, int month, std::vector<std::string> wanted_buildings, std::vector<std::string> wanted_resources){
+    std::vector<pid_t> children_pids;
     for (auto building_name : wanted_buildings){
         int write_pipe;
-        run_new_process(BUILDING_EXECUTABLE, write_pipe);
-        write(write_pipe, building_name.c_str(), building_name.size());
+        run_new_process(BUILDING_EXECUTABLE, write_pipe, logger);
+        int num_of_resources = wanted_resources.size();
+        
+        std::string pipe_data = starting_path + " " + building_name + " " + std::to_string(month) + " " + std::to_string(num_of_resources);
+        for (auto resource : wanted_resources){
+            pipe_data += " " + resource;
+        }
+        write(write_pipe, pipe_data.c_str(), pipe_data.size());
+        std::cout << "Writing to pipe: " << pipe_data << std::endl;
         close(write_pipe);
-        logger.log_info("Building started");
+        logger.log_info("Building %s process made", building_name.c_str());
     }
-    return child_pids;
-}
-
-void wait_for_children(std::vector<pid_t> child_pids){
-    for (auto pid : child_pids){
-        int status;
-        waitpid(pid, &status, 0);
-        if (WIFEXITED(status)){
-            int exit_status = WEXITSTATUS(status);
-            if (exit_status != 0){
-                logger.log_error("Child exited with non-zero status");
-                exit(EXIT_FAILURE);
-            }
-        }
-        else{
-            logger.log_error("Child did not exit normally");
-            exit(EXIT_FAILURE);
-        }
-    }
+    return children_pids;
 }
 
 void remove_fifo_files(std::vector<std::string>& fifo_files){
@@ -127,18 +90,16 @@ void remove_fifo_files(std::vector<std::string>& fifo_files){
     }
 }
 
-void run_workers(std::string starting_path, std::vector<std::string> wanted_buildings, std::vector<std::string> wanted_resources){
-    std::vector<pid_t> child_pids;
+void run_workers(std::string starting_path, int month, std::vector<std::string> wanted_buildings, std::vector<std::string> wanted_resources){
+    std::vector<pid_t> children_pids;
     std::vector<std::string> fifo_files = make_fifo_files(wanted_buildings);
-    child_pids = run_buildings_processes(starting_path, wanted_buildings, fifo_files);
-    wait_for_children(child_pids);
+    children_pids = run_buildings_processes(starting_path, month, wanted_buildings, wanted_resources);
+    wait_for_children(children_pids, logger);
     remove_fifo_files(fifo_files);
 }
 
-
-
 int main(int argc, char* argv[]){
-    logger.log_info("Starting program");
+    logger.log_info("Main process started");
     if (argc < 2){
         logger.log_error("No starting path provided");
         return EXIT_FAILURE;
@@ -149,7 +110,10 @@ int main(int argc, char* argv[]){
     std::vector<std::string> wanted_buildings = read_space_separated_input("Enter the name of buildings you want to process:");
     print_vector("Recourses", RECOURSES);
     std::vector<std::string> wanted_resources = read_space_separated_input("Enter the name of resources you want to process:");
-    run_workers(starting_path, wanted_buildings, wanted_resources);
+    int month;
+    std::cout << "Enter the month you want to process: ";
+    std::cin >> month;
+    run_workers(starting_path, month, wanted_buildings, wanted_resources);
 
     return EXIT_SUCCESS;
 }
