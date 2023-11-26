@@ -27,7 +27,7 @@ pid_t run_new_process(const char* executable, int& write_pipe, int& read_pipe,  
         close(pipe1[1]);
         close(pipe2[0]);
         dup2(pipe1[0], STDIN_FILENO);
-        dup2(pipe2[1], STDOUT_FILENO);
+        dup2(pipe2[1], STDOUT_FILENO);  
         close(pipe1[0]);
         close(pipe2[1]);
         execl(executable, executable, nullptr);
@@ -42,6 +42,8 @@ pid_t run_new_process(const char* executable, int& write_pipe, int& read_pipe,  
     }
     close(pipe1[0]);
     return pid;
+
+    
 }
 
 void wait_for_children(std::vector<ChildData> children_data, Logger& logger){
@@ -63,7 +65,8 @@ void wait_for_children(std::vector<ChildData> children_data, Logger& logger){
     }
 }
 
-void print_children_outputs(std::vector<ChildData> children_data){
+std::vector<std::string> read_children_outputs(std::vector<ChildData> children_data){
+    std::vector<std::string> pipe_outputs;
     for (auto child_data : children_data){
         int read_pipe = child_data.second;
         std::string pipe_data;
@@ -71,8 +74,12 @@ void print_children_outputs(std::vector<ChildData> children_data){
         int num_of_bytes;
         while (num_of_bytes = read(read_pipe, buffer, 1024)){
             buffer[num_of_bytes] = '\0';
-            std::cout << buffer;
+            pipe_data += buffer;
+            //std::cout << buffer;
         }
+        pipe_outputs.push_back(pipe_data);
         close(read_pipe);
     }
+    return pipe_outputs;
 }
+

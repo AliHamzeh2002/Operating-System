@@ -9,6 +9,7 @@
 
 static std::vector<std::string> RECOURSES = {"Gas", "Electricity", "Water"};
 const static char* BUILDING_EXECUTABLE = "./building.out";
+const static char* BILLS_EXECUTABLE = "./bills.out";
 
 static Logger logger("main");
 
@@ -47,6 +48,8 @@ void print_vector(std::string name, std::vector<std::string> vec){
     }
 }
 
+
+
 std::vector<std::string> make_fifo_files(std::vector<std::string> wanted_buildings){
     std::vector<std::string> fifo_files;
     for (int i = 0; i < wanted_buildings.size(); i++){
@@ -79,6 +82,20 @@ std::vector<ChildData> run_buildings_processes(std::string starting_path, int mo
     return children_data;
 }
 
+ChildData run_bills_process(std::string starting_path, std::vector<std::string> wanted_buildings){
+    int write_pipe;
+    int read_pipe;
+    pid_t child_pid = run_new_process(BILLS_EXECUTABLE, write_pipe, read_pipe, logger);
+    std::string pipe_data = starting_path;
+    for (auto building_name : find_buildings(starting_path)){
+        pipe_data += " " + building_name;
+    }
+    write(write_pipe, pipe_data.c_str(), pipe_data.size());
+    close(write_pipe);
+    logger.log_info("Bills process made");   
+    return {child_pid, read_pipe};
+}
+
 void remove_fifo_files(std::vector<std::string>& fifo_files){
     for (auto fifo_file : fifo_files){
         if (remove(fifo_file.c_str()) == -1){
@@ -88,13 +105,23 @@ void remove_fifo_files(std::vector<std::string>& fifo_files){
     }
 }
 
+void print_children_outputs(std::vector<std::string>& children_outputs){
+    for (auto &data : children_outputs){
+        std::cout << data;
+    }
+}
+
 void run_workers(std::string starting_path, int month, std::vector<std::string> wanted_buildings, std::vector<std::string> wanted_resources){
     std::vector<ChildData> children_data;
     std::vector<std::string> fifo_files = make_fifo_files(wanted_buildings);
     children_data = run_buildings_processes(starting_path, month, wanted_buildings, wanted_resources);
+    ChildData bills_data = run_bills_process(starting_path, wanted_buildings);
+    children_data.push_back(bills_data);
     wait_for_children(children_data, logger);
     remove_fifo_files(fifo_files);
-    print_children_outputs(children_data);
+    std::vector<std::string> children_outputs = read_children_outputs(children_data);
+    print_children_outputs(children_outputs);
+
 }
 
 int main(int argc, char* argv[]){
@@ -116,3 +143,4 @@ int main(int argc, char* argv[]){
 
     return EXIT_SUCCESS;
 }
+
