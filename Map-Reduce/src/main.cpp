@@ -82,12 +82,13 @@ std::vector<ChildData> run_buildings_processes(std::string starting_path, int mo
     return children_data;
 }
 
-ChildData run_bills_process(std::string starting_path, std::vector<std::string> wanted_buildings){
+ChildData run_bills_process(std::string starting_path, int month, std::vector<std::string> wanted_buildings){
     int write_pipe;
     int read_pipe;
     pid_t child_pid = run_new_process(BILLS_EXECUTABLE, write_pipe, read_pipe, logger);
     std::string pipe_data = starting_path;
-    for (auto building_name : find_buildings(starting_path)){
+    pipe_data += " " + std::to_string(month);
+    for (auto building_name : wanted_buildings){
         pipe_data += " " + building_name;
     }
     write(write_pipe, pipe_data.c_str(), pipe_data.size());
@@ -115,7 +116,7 @@ void run_workers(std::string starting_path, int month, std::vector<std::string> 
     std::vector<ChildData> children_data;
     std::vector<std::string> fifo_files = make_fifo_files(wanted_buildings);
     children_data = run_buildings_processes(starting_path, month, wanted_buildings, wanted_resources);
-    ChildData bills_data = run_bills_process(starting_path, wanted_buildings);
+    ChildData bills_data = run_bills_process(starting_path, month, wanted_buildings);
     children_data.push_back(bills_data);
     wait_for_children(children_data, logger);
     remove_fifo_files(fifo_files);

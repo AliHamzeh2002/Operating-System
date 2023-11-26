@@ -12,8 +12,8 @@ building.out: $(OBJDIR)/building.o $(OBJDIR)/logger.o
 resource.out: $(OBJDIR)/resource.o $(OBJDIR)/logger.o  $(OBJDIR)/csvhandler.o
 	$(CC) $(OBJDIR)/resource.o $(OBJDIR)/logger.o $(OBJDIR)/csvhandler.o -o resource.out
 
-bills.out: $(OBJDIR)/bills.o $(OBJDIR)/logger.o  
-	$(CC) $(OBJDIR)/bills.o $(OBJDIR)/logger.o -o bills.out
+bills.out: $(OBJDIR)/bills.o $(OBJDIR)/logger.o $(OBJDIR)/csvhandler.o
+	$(CC) $(OBJDIR)/bills.o $(OBJDIR)/logger.o $(OBJDIR)/csvhandler.o -o bills.out
 
 $(OBJDIR)/main.o: main.cpp logger.cpp utils.cpp logger.hpp
 	$(CC) -c main.cpp -o $(OBJDIR)/main.o
@@ -24,7 +24,7 @@ $(OBJDIR)/building.o: building.cpp logger.cpp utils.cpp logger.hpp
 $(OBJDIR)/resource.o: resource.cpp logger.cpp utils.cpp csvhandler.cpp logger.hpp csvhandler.hpp
 	$(CC) -c resource.cpp -o $(OBJDIR)/resource.o
 
-$(OBJDIR)/bills.o: bills.cpp logger.cpp logger.hpp
+$(OBJDIR)/bills.o: bills.cpp logger.cpp csvhandler.cpp logger.hpp csvhandler.hpp
 	$(CC) -c bills.cpp -o $(OBJDIR)/bills.o
 
 $(OBJDIR)/csvhandler.o: csvhandler.cpp csvhandler.hpp
