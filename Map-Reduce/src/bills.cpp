@@ -47,7 +47,9 @@ std::string generate_water_bill(std::vector<double> consumption_per_hour, int ma
         }
         bill_price += consumption_per_hour[i - 1] * 1.0 * coeff;
     }
-    std::string bill = "Water: " + std::to_string(bill_price) + "$\n";
+    std::ostringstream bill_price_ss;
+    bill_price_ss << std::fixed << std::setprecision(PRECISION) << bill_price;
+    std::string bill = "Water: " + bill_price_ss.str() + "$\n";
     return bill;
 }
 
@@ -82,8 +84,9 @@ std::string generate_electricity_bill(std::vector<double> consumption_per_hour, 
         }
         bill_price += consumption_per_hour[i - 1] * 1.0 * coeff;
     }
-
-    std::string bill = "Electricity: " + std::to_string(bill_price) + "$\n";
+    std::ostringstream bill_price_ss;
+    bill_price_ss << std::fixed << std::setprecision(PRECISION) << bill_price;
+    std::string bill = "Electricity: " + bill_price_ss.str() + "$\n";
     return bill;
 }
 
