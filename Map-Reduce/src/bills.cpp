@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
-
 #include "logger.hpp"
 #include "consts.hpp"
 #include "csvhandler.hpp"

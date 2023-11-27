@@ -9,10 +9,11 @@ class Logger{
         Logger(std::string logger_name);
         Logger();
         void set_logger_name(std::string logger_name);
-        void log_msg(const std::string& msg_fmt, va_list& args);
         void log_info(const std::string& msg_fmt, ...);
         void log_error(const std::string& msg_fmt, ...);
         void log_error();
+        std::string make_msg(const std::string& msg_fmt, va_list args);
+
     private:
         std::string logger_name;
 };
