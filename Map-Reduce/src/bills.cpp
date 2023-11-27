@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 #include "logger.hpp"
 #include "consts.hpp"
@@ -57,7 +58,9 @@ std::string generate_gas_bill(std::vector<double> consumption_per_hour, int max_
     for (int i = 1; i <= NUM_HOURS; i++){
         bill_price += consumption_per_hour[i - 1] * 1.0 * coeff;
     }
-    std::string bill = "Gas: " + std::to_string(bill_price) + "$\n";
+    std::ostringstream bill_price_ss;
+    bill_price_ss << std::fixed << std::setprecision(PRECISION) << bill_price;
+    std::string bill = "Gas: " + bill_price_ss.str() + "$\n";
     return bill;
 }
 
@@ -66,7 +69,7 @@ std::string generate_electricity_bill(std::vector<double> consumption_per_hour, 
     for (int i = 0; i < NUM_HOURS; i++){
         avg += consumption_per_hour[i];
     }
-    avg /= NUM_HOURS;
+    avg /= (NUM_HOURS * NUM_DAYS);
     double bill_price = 0;
     int coeff = stoi(csv_handler.get_cell("electricity", month - 1));
     for (int i = 1; i <= NUM_HOURS; i++){
@@ -80,6 +83,7 @@ std::string generate_electricity_bill(std::vector<double> consumption_per_hour, 
         }
         bill_price += consumption_per_hour[i - 1] * 1.0 * coeff;
     }
+
     std::string bill = "Electricity: " + std::to_string(bill_price) + "$\n";
     return bill;
 }

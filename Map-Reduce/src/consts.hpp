@@ -4,6 +4,7 @@
 #include <string>
 const int NUM_HOURS = 6;
 const int NUM_DAYS = 30;
+const int PRECISION = 3;
 static std::vector<std::string> RECOURSES = {"Gas", "Electricity", "Water"};
 static std::vector<std::string> MEASURES = {
                                                 "total consumption",    

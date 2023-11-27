@@ -3,6 +3,7 @@
 #include "consts.hpp"
 #include "color.hpp"
 #include <iostream>
+#include <iomanip>
 #include <filesystem>
 #include <vector>
 #include <sstream>
@@ -108,6 +109,7 @@ void write_resource_report(std::string resource, double total_consumption, doubl
 void handle_children_outputs(std::vector<ChildData> children_data, std::string building_name,
                              std::vector<std::string> wanted_measures){
     std::cout << Color::MAG << "Building: " << building_name << "\n";
+    std::cout << std::fixed << std::setprecision(PRECISION);
     std::vector<std::string> children_outputs = read_children_outputs(children_data);
     std::string fifo_data;
     for (auto& data : children_outputs){
