@@ -36,4 +36,5 @@ $(OBJDIR)/logger.o: logger.cpp logger.hpp color.hpp
 .PHONY: clean
 
 clean:
-	rm -r *.o
+	rm -r $(OBJDIR)/*.o
+	rm *.out
