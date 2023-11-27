@@ -19,9 +19,8 @@ void Logger::set_logger_name(std::string logger_name){
 }
 
 std::string Logger::make_msg(const std::string& msg_fmt, va_list args){
-    int size = vsnprintf(nullptr, 0, msg_fmt.c_str(), args);
-    std::string result(size, '\0');
-    vsnprintf(&result[0], size + 1, msg_fmt.c_str(), args);
+    char result[4096];
+    vsnprintf(result, sizeof(result), msg_fmt.c_str(), args);
     return result;
 }
 

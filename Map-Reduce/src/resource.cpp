@@ -25,7 +25,7 @@ std::vector<double> calc_total_consumption_per_hour(CSV_Handler& csv_handler, in
     return total_consumption_per_hour;
 }
 
-void show_report(CSV_Handler& csv_handler, int month, std::string resource){
+void send_report(CSV_Handler& csv_handler, int month, std::string resource){
     std::vector<double> total_consumption_per_hour = calc_total_consumption_per_hour(csv_handler, month);
     std::cout << resource << "\n";
     for (int i = 0; i < NUM_HOURS; i++){
@@ -42,7 +42,7 @@ int main(){
     std::string csv_path = building_path + "/" + resource + ".csv";
     CSV_Handler csv_handler(csv_path, logger);
     logger.log_info("csv_handler created");
-    show_report(csv_handler, month, resource);
+    send_report(csv_handler, month, resource);
     logger.log_info("Report written");
 
 }

@@ -149,7 +149,6 @@ int main(){
     while (std::cin >> measure){
         wanted_measures.push_back(measure);
     }
-    
     std::vector<ChildData> children_data = run_resource_processes(starting_path, building_name, month, wanted_resources);
     wait_for_children(children_data, logger);
     handle_children_outputs(children_data, building_name, wanted_measures);
