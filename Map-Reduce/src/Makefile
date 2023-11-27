@@ -18,10 +18,10 @@ bills.out: $(OBJDIR)/bills.o $(OBJDIR)/logger.o $(OBJDIR)/csvhandler.o
 $(OBJDIR)/main.o: main.cpp logger.cpp utils.cpp logger.hpp
 	$(CC) -c main.cpp -o $(OBJDIR)/main.o
 
-$(OBJDIR)/building.o: building.cpp logger.cpp utils.cpp logger.hpp
+$(OBJDIR)/building.o: building.cpp logger.cpp utils.cpp logger.hpp color.hpp
 	$(CC) -c building.cpp -o $(OBJDIR)/building.o
 
-$(OBJDIR)/resource.o: resource.cpp logger.cpp utils.cpp csvhandler.cpp logger.hpp csvhandler.hpp
+$(OBJDIR)/resource.o: resource.cpp logger.cpp utils.cpp csvhandler.cpp logger.hpp csvhandler.hpp color.hpp
 	$(CC) -c resource.cpp -o $(OBJDIR)/resource.o
 
 $(OBJDIR)/bills.o: bills.cpp logger.cpp csvhandler.cpp logger.hpp csvhandler.hpp

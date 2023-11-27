@@ -11,6 +11,7 @@
 
 const static char* RESOURCE_EXECUTABLE = "./resource.out";
 const int NUM_HOURS = 6;
+const int NUM_DAYS = 30;
 static Logger logger;
 
 std::vector<ChildData> run_resource_processes(std::string starting_path, std::string building_name, 
@@ -84,7 +85,15 @@ int calc_max_consumption_hour(std::vector<double> consumption_per_hour){
     return max_consumption_hour;
 }
 
-void handle_children_outputs(std::vector<ChildData> children_data, std::string building_name){
+bool is_in_vector(std::vector<std::string> v, std::string s){
+    for (auto& elem : v){
+        if (elem == s)
+            return true;
+    }
+    return false;
+}
+
+void handle_children_outputs(std::vector<ChildData> children_data, std::string building_name, std::vector<std::string> wanted_measures){
     std::vector<std::string> children_outputs = read_children_outputs(children_data);
     std::string fifo_data;
     for (auto& data : children_outputs){
@@ -93,16 +102,20 @@ void handle_children_outputs(std::vector<ChildData> children_data, std::string b
         ss >> resource;
         std::vector<double> consumption_per_hour = read_consumption_per_hour(ss);
         double total_consumption = calc_total_consumption(consumption_per_hour);
-        double avg_consumption = total_consumption / NUM_HOURS;
+        double avg_consumption = total_consumption / (NUM_HOURS * NUM_DAYS);
         int max_consumption_hour = calc_max_consumption_hour(consumption_per_hour);
-        double diff_max_avg = consumption_per_hour[max_consumption_hour] - avg_consumption;
+        double diff_max_avg = consumption_per_hour[max_consumption_hour] / NUM_HOURS - avg_consumption;
         fifo_data = fifo_data + make_fifo_data(consumption_per_hour, resource, max_consumption_hour);
         std::cout << "Building: " << building_name << "\n";
         std::cout << "\t" << "Resource: " << resource << "\n";
-        std::cout << "\t\t" <<  "Total-consumption: " << total_consumption << "\n";
-        std::cout << "\t\t" <<  "Average-consumption: " << avg_consumption << "\n";
-        std::cout << "\t\t" <<  "Max-consumption Hour: " << max_consumption_hour << "\n";
-        std::cout << "\t\t" <<  "Diff-max-avg: " << diff_max_avg << "\n";
+        if (is_in_vector(wanted_measures, "1"))
+            std::cout << "\t\t" <<  "Total-consumption: " << total_consumption << "\n";
+        if (is_in_vector(wanted_measures, "2"))
+            std::cout << "\t\t" <<  "Average-consumption: " << avg_consumption << "\n";
+        if (is_in_vector(wanted_measures, "3"))
+            std::cout << "\t\t" <<  "Max-consumption Hour: " << max_consumption_hour << "\n";
+        if (is_in_vector(wanted_measures, "4"))
+            std::cout << "\t\t" <<  "Diff-max-avg: " << diff_max_avg << "\n";
         logger.log_info("Building data written.");
     }
     send_data_to_bills_process(fifo_data, building_name);
@@ -123,10 +136,15 @@ int main(){
         std::cin >> resource;
         wanted_resources.push_back(resource);
     }
+    std::string measure;
+    std::vector<std::string> wanted_measures;
+    while (std::cin >> measure){
+        wanted_measures.push_back(measure);
+    }
     
     std::vector<ChildData> children_data = run_resource_processes(starting_path, building_name, month, wanted_resources);
     wait_for_children(children_data, logger);
-    handle_children_outputs(children_data, building_name);
+    handle_children_outputs(children_data, building_name, wanted_measures);
     exit(EXIT_SUCCESS);
 }
 

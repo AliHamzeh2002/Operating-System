@@ -8,6 +8,12 @@
 #include "utils.cpp"
 
 static std::vector<std::string> RECOURSES = {"Gas", "Electricity", "Water"};
+static std::vector<std::string> MEASURES = {
+                                                "total consumption",    
+                                                "average consumption", 
+                                                "max consumption hour",
+                                                "max - average consumption",
+                                            };
 const static char* BUILDING_EXECUTABLE = "./building.out";
 const static char* BILLS_EXECUTABLE = "./bills.out";
 
@@ -29,6 +35,7 @@ std::vector<std::string> find_buildings(std::string starting_path){
 }
 
 std::vector<std::string> read_space_separated_input(std::string msg){
+    std::cout << msg;
     std::string input;
     getline(std::cin, input);
     std::istringstream iss(input);
@@ -63,7 +70,8 @@ std::vector<std::string> make_fifo_files(std::vector<std::string> wanted_buildin
     return fifo_files;
 }
 
-std::vector<ChildData> run_buildings_processes(std::string starting_path, int month, std::vector<std::string> wanted_buildings, std::vector<std::string> wanted_resources){
+std::vector<ChildData> run_buildings_processes(std::string starting_path, int month, std::vector<std::string> wanted_buildings,
+                                               std::vector<std::string> wanted_resources, std::vector<std::string> wanted_measures){
     std::vector<ChildData> children_data;
     for (auto building_name : wanted_buildings){
         int write_pipe;
@@ -73,6 +81,9 @@ std::vector<ChildData> run_buildings_processes(std::string starting_path, int mo
         std::string pipe_data = starting_path + " " + building_name + " " + std::to_string(month) + " " + std::to_string(num_of_resources);
         for (auto resource : wanted_resources){
             pipe_data += " " + resource;
+        }
+        for (auto measure : wanted_measures){
+            pipe_data += " " + measure;
         }
         write(write_pipe, pipe_data.c_str(), pipe_data.size());
         close(write_pipe);
@@ -112,10 +123,11 @@ void print_children_outputs(std::vector<std::string>& children_outputs){
     }
 }
 
-void run_workers(std::string starting_path, int month, std::vector<std::string> wanted_buildings, std::vector<std::string> wanted_resources){
+void run_workers(std::string starting_path, int month, std::vector<std::string> wanted_buildings,
+                 std::vector<std::string> wanted_resources, std::vector<std::string> wanted_measures){
     std::vector<ChildData> children_data;
     std::vector<std::string> fifo_files = make_fifo_files(wanted_buildings);
-    children_data = run_buildings_processes(starting_path, month, wanted_buildings, wanted_resources);
+    children_data = run_buildings_processes(starting_path, month, wanted_buildings, wanted_resources, wanted_measures);
     ChildData bills_data = run_bills_process(starting_path, month, wanted_buildings);
     children_data.push_back(bills_data);
     wait_for_children(children_data, logger);
@@ -134,13 +146,15 @@ int main(int argc, char* argv[]){
     std::string starting_path = argv[1];
     std::vector<std::string> buildings = find_buildings(starting_path);
     print_vector("Buildings", buildings);
-    std::vector<std::string> wanted_buildings = read_space_separated_input("Enter the name of buildings you want to process:");
+    std::vector<std::string> wanted_buildings = read_space_separated_input("Enter the name of buildings you want to process: ");
     print_vector("Recourses", RECOURSES);
-    std::vector<std::string> wanted_resources = read_space_separated_input("Enter the name of resources you want to process:");
+    std::vector<std::string> wanted_resources = read_space_separated_input("Enter the name of resources you want to process: ");
+    print_vector("Measures", MEASURES);
+    std::vector<std::string> wanted_measures = read_space_separated_input("Enter the index of measures you want to process: ");
     int month;
     std::cout << "Enter the month you want to process: ";
     std::cin >> month;
-    run_workers(starting_path, month, wanted_buildings, wanted_resources);
+    run_workers(starting_path, month, wanted_buildings, wanted_resources, wanted_measures);
 
     return EXIT_SUCCESS;
 }
