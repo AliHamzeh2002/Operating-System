@@ -1,12 +1,11 @@
 #include "logger.hpp"
 #include "csvhandler.hpp"
+#include "consts.hpp"
 
 #include <iostream>
 
 static Logger logger;
 
-const int NUM_DAYS = 30;
-const int NUM_HOURS = 6;
 
 std::vector<double> calc_total_consumption_per_hour(CSV_Handler& csv_handler, int month){
     std::vector<double> total_consumption_per_hour(NUM_HOURS, 0);

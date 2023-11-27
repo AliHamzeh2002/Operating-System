@@ -15,16 +15,16 @@ resource.out: $(OBJDIR)/resource.o $(OBJDIR)/logger.o  $(OBJDIR)/csvhandler.o
 bills.out: $(OBJDIR)/bills.o $(OBJDIR)/logger.o $(OBJDIR)/csvhandler.o
 	$(CC) $(OBJDIR)/bills.o $(OBJDIR)/logger.o $(OBJDIR)/csvhandler.o -o bills.out
 
-$(OBJDIR)/main.o: main.cpp logger.cpp utils.cpp logger.hpp
+$(OBJDIR)/main.o: main.cpp logger.cpp utils.cpp logger.hpp consts.hpp
 	$(CC) -c main.cpp -o $(OBJDIR)/main.o
 
-$(OBJDIR)/building.o: building.cpp logger.cpp utils.cpp logger.hpp color.hpp
+$(OBJDIR)/building.o: building.cpp logger.cpp utils.cpp logger.hpp color.hpp consts.hpp
 	$(CC) -c building.cpp -o $(OBJDIR)/building.o
 
-$(OBJDIR)/resource.o: resource.cpp logger.cpp utils.cpp csvhandler.cpp logger.hpp csvhandler.hpp color.hpp
+$(OBJDIR)/resource.o: resource.cpp logger.cpp utils.cpp csvhandler.cpp logger.hpp csvhandler.hpp color.hpp consts.hpp
 	$(CC) -c resource.cpp -o $(OBJDIR)/resource.o
 
-$(OBJDIR)/bills.o: bills.cpp logger.cpp csvhandler.cpp logger.hpp csvhandler.hpp
+$(OBJDIR)/bills.o: bills.cpp logger.cpp csvhandler.cpp logger.hpp csvhandler.hpp consts.hpp
 	$(CC) -c bills.cpp -o $(OBJDIR)/bills.o
 
 $(OBJDIR)/csvhandler.o: csvhandler.cpp csvhandler.hpp

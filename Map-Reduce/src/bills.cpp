@@ -4,13 +4,12 @@
 #include <sstream>
 
 #include "logger.hpp"
+#include "consts.hpp"
 #include "csvhandler.hpp"
 #include "color.hpp"
 
 
 static Logger logger("Bills");
-
-const int NUM_HOURS = 6;
 
 std::vector<std::string> get_wanted_buildings(){
     std::vector<std::string> buildings;

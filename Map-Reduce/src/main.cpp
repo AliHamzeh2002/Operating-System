@@ -6,16 +6,9 @@
 #include <sys/stat.h>
 #include "logger.hpp"
 #include "utils.cpp"
+#include "consts.hpp"
 
-static std::vector<std::string> RECOURSES = {"Gas", "Electricity", "Water"};
-static std::vector<std::string> MEASURES = {
-                                                "total consumption",    
-                                                "average consumption", 
-                                                "max consumption hour",
-                                                "max - average consumption",
-                                            };
-const static char* BUILDING_EXECUTABLE = "./building.out";
-const static char* BILLS_EXECUTABLE = "./bills.out";
+
 
 static Logger logger("main");
 
