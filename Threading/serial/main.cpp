@@ -75,7 +75,6 @@ void get_pixels_from_bmp24(int end, int rows, int cols, char* file_read_buffer, 
     int extra = cols % 4;
     for (int i = 0; i < rows; i++) {
         count += extra;
-        std::vector<Pixel> row;
         for (int j = cols - 1; j >= 0; j--) {
             Pixel pixel;
             for (int k = 0; k < 3; k++){
@@ -92,9 +91,8 @@ void get_pixels_from_bmp24(int end, int rows, int cols, char* file_read_buffer, 
                 }
                 count++;
             }
-            row.push_back(pixel);
+            image[i][j] = pixel;
         }
-        image.push_back(row);
     }
 }
 
@@ -242,6 +240,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     Image image;
+    image.resize(rows);
+    for (int i = 0; i < rows; i++) {
+        image[i].resize(cols);
+    }
     auto t1 = std::chrono::high_resolution_clock::now();
     get_pixels_from_bmp24(buffer_size - 1, rows, cols, file_buffer, image);
     auto t2 = std::chrono::high_resolution_clock::now();
