@@ -115,13 +115,13 @@ void write_out_bmp24(char* file_buffer, const char* name_of_file, int buffer_siz
                 switch (k)
                 {
                 case 0:
-                    file_buffer[buffer_size - count] = static_cast<char>(image[i][j].red);
-                    break;
-                case 1:
                     file_buffer[buffer_size - count] = static_cast<char>(image[i][j].green);
                     break;
-                case 2:
+                case 1:
                     file_buffer[buffer_size - count] = static_cast<char>(image[i][j].blue);
+                    break;
+                case 2:
+                    file_buffer[buffer_size - count] = static_cast<char>(image[i][j].red);
                     break;
                 }
             } 
@@ -147,9 +147,7 @@ void perform_kernel_on_pixel(int row, int col, Image& image, const Image& temp_i
     int kernel_rows = kernel.size();
     int kernel_cols = kernel[0].size();
 
-    image[row][col].red = 0;
-    image[row][col].green = 0;
-    image[row][col].blue = 0;
+    int red = 0, green = 0, blue = 0;
     for (int i = 0; i < kernel_rows; i++){
         for (int j = 0; j < kernel_cols; j++){
             int image_row = row - kernel_rows / 2 + i;
@@ -159,20 +157,27 @@ void perform_kernel_on_pixel(int row, int col, Image& image, const Image& temp_i
             if (image_col < 0 || image_col >= image[0].size())
                 continue;
                 
-            image[row][col].red += temp_image[image_row][image_col].red * kernel[i][j]/16;
-            image[row][col].red = std::min((unsigned char) 255, image[row][col].red);
-            image[row][col].red = std::max((unsigned char) 0, image[row][col].red);
-
-            image[row][col].green += temp_image[image_row][image_col].green * kernel[i][j] / 16;
-            image[row][col].green = std::min((unsigned char) 255, image[row][col].green);
-            image[row][col].green = std::max((unsigned char) 0, image[row][col].green);
-
-            image[row][col].blue += temp_image[image_row][image_col].blue * kernel[i][j] / 16;
-            image[row][col].blue = std::min((unsigned char) 255, image[row][col].blue);
-            image[row][col].blue = std::max((unsigned char) 0, image[row][col].blue);
+            red += temp_image[image_row][image_col].red * kernel[i][j] / 16;
+            green += temp_image[image_row][image_col].green * kernel[i][j] / 16;
+            blue += temp_image[image_row][image_col].blue * kernel[i][j] / 16;
+            
 
         }
     }
+    green = std::min(255, green);
+    green = std::max(0, green);
+    blue = std::min(255, blue);
+    blue = std::max(0, blue);
+    red = std::min(255, red);
+    red = std::max(0, red);
+
+
+    image[row][col].red = (unsigned)red;
+    image[row][col].green = (unsigned)green;
+    image[row][col].blue = (unsigned)blue;
+
+
+
 }
 
 void filter_kernel(Image& image, Kernel& kernel){
@@ -216,7 +221,6 @@ void add_hatching(Image& image){
 
     float m1 = (float)num_rows / num_cols;
 
-    std:: cout << num_rows << std::endl;
     for (int i = 0; i < num_cols; i++){
         image[(int)(i * m1)][i] = {255, 255, 255};
     }
@@ -243,7 +247,8 @@ int main(int argc, char* argv[]) {
     auto t2 = std::chrono::high_resolution_clock::now();
     v_reverse(image);
     auto t3 = std::chrono::high_resolution_clock::now();
-    Kernel blur_filter = {{1, 2, 1}, {2, 1, 2}, {1, 2, 1}};
+    Kernel blur_filter = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+    Kernel test_filter = {{0, -1, 0}, {-1, 5, -1}, {0, -1, 0}};
     filter_kernel(image, blur_filter);
     auto t4 = std::chrono::high_resolution_clock::now();
     purple_haze(image);
