@@ -91,18 +91,18 @@ bool fill_and_allocate(char*& buffer, const char* file_name, int& rows, int& col
 void *get_pixels_thread(void* data){
     ThreadData* thread_data = (ThreadData*)data;
     int extra = cols % 4;
-    int count = thread_data->start_row * (cols*3 + extra);
+    int count = thread_data->start_row * (cols*3 + extra) + 1;
     int num_rows = thread_data->num_rows;
 
     for (int i = 0; i < num_rows; i++){
         count += extra;
         for (int j = 0; j < cols; j++){
             Pixel pixel;
-            pixel.red = static_cast<unsigned char>(file_buffer[buffer_size - count]);
+            pixel.red = static_cast<unsigned char>(file_buffer[buffer_size - 1 - count]);
             count++;
-            pixel.green = static_cast<unsigned char>(file_buffer[buffer_size - count]);
+            pixel.green = static_cast<unsigned char>(file_buffer[buffer_size - 1 - count]);
             count++;
-            pixel.blue = static_cast<unsigned char>(file_buffer[buffer_size - count]);
+            pixel.blue = static_cast<unsigned char>(file_buffer[buffer_size - 1 - count]);
             count++;
             image[thread_data->start_row+i][j] = pixel;
         }
@@ -138,7 +138,7 @@ void get_pixels_from_bmp24() {
 void* write_pixels_thread(void* data){
     ThreadData* thread_data = (ThreadData*)data;
     int extra = cols % 4;
-    int count = thread_data->start_row * (cols*3 + extra);
+    int count = thread_data->start_row * (cols*3 + extra) + 1;
     int num_rows = thread_data->num_rows;
 
     for (int i = 0; i < num_rows; i++){
@@ -301,10 +301,9 @@ void filter_kernel(Kernel& kernel){
 void *purple_haze_thread(void* data){
     ThreadData* thread_data = (ThreadData*)data;
     int num_rows = thread_data->num_rows;
-    int num_cols = image[0].size();
 
     for (int i = 0; i < num_rows; i++){
-        for (int j = 0; j < num_cols; j++){
+        for (int j = 0; j < cols; j++){
             int green = image[thread_data->start_row + i][j].red * 0.16f + image[thread_data->start_row + i][j].green * 0.5f + image[thread_data->start_row + i][j].blue * 0.16f;
             int blue = image[thread_data->start_row + i][j].red * 0.6f + image[thread_data->start_row + i][j].green * 0.2f + image[thread_data->start_row + i][j].blue * 0.8f;
             int red = image[thread_data->start_row + i][j].red * 0.5f + image[thread_data->start_row + i][j].green * 0.3f + image[thread_data->start_row + i][j].blue * 0.5f;
@@ -314,7 +313,7 @@ void *purple_haze_thread(void* data){
             red = std::min(red, 255);
             green = std::min(green, 255);
             blue = std::min(blue, 255);
-    
+                
             image[thread_data->start_row + i][j].red = (unsigned)red;
             image[thread_data->start_row + i][j].blue =(unsigned)blue;
             image[thread_data->start_row + i][j].green = (unsigned)green;

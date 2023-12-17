@@ -75,7 +75,7 @@ void get_pixels_from_bmp24(int end, int rows, int cols, char* file_read_buffer, 
     int extra = cols % 4;
     for (int i = 0; i < rows; i++) {
         count += extra;
-        for (int j = cols - 1; j >= 0; j--) {
+        for (int j = 0; j < cols; j++) {
             Pixel pixel;
             for (int k = 0; k < 3; k++){
             switch (k){
@@ -109,19 +109,19 @@ void write_out_bmp24(char* file_buffer, const char* name_of_file, int buffer_siz
         count += extra;
         for (int j = 0; j < cols; j++) {
             for (int k = 0; k < 3; k++){
-                count++; // check 
                 switch (k)
                 {
                 case 0:
-                    file_buffer[buffer_size - count] = static_cast<char>(image[i][j].green);
-                    break;
-                case 1:
-                    file_buffer[buffer_size - count] = static_cast<char>(image[i][j].blue);
-                    break;
-                case 2:
                     file_buffer[buffer_size - count] = static_cast<char>(image[i][j].red);
                     break;
+                case 1:
+                    file_buffer[buffer_size - count] = static_cast<char>(image[i][j].green);
+                    break;
+                case 2:
+                    file_buffer[buffer_size - count] = static_cast<char>(image[i][j].blue);
+                    break;
                 }
+                count ++;
             } 
         }
     }
@@ -196,15 +196,16 @@ void purple_haze(Image& image){
 
     for (int i = 0; i < num_rows; i++){
         for (int j = 0; j < num_cols; j++){
-            int blue = image[i][j].red * 0.16f + image[i][j].green * 0.5f + image[i][j].blue * 0.16f;
-            int red = image[i][j].red * 0.6f + image[i][j].green * 0.2f + image[i][j].blue * 0.8f;
-            int green = image[i][j].red * 0.5f + image[i][j].green * 0.3f + image[i][j].blue * 0.5f;
+            int red = image[i][j].red * 0.16f + image[i][j].green * 0.5f + image[i][j].blue * 0.16f;
+            int green = image[i][j].red * 0.6f + image[i][j].green * 0.2f + image[i][j].blue * 0.8f;
+            int blue = image[i][j].red * 0.5f + image[i][j].green * 0.3f + image[i][j].blue * 0.5f;
             red = std::max(red, 0);
             green = std::max(green, 0);
             blue = std::max(blue, 0);
             red = std::min(red, 255);
             green = std::min(green, 255);
             blue = std::min(blue, 255);
+
     
             image[i][j].red = (unsigned)red;
             image[i][j].blue =(unsigned)blue;

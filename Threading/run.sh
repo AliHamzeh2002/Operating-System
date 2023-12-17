@@ -2,7 +2,16 @@
 
 # Arguments for parallel.out and serial.out
 arg1=$1
-arg2="output.bmp"
+arg2="outputSerial.bmp"
+arg3="outputParallel.bmp"
+
+#compile
+cd serial
+make
+cd ..
+cd parallel
+make
+cd ..
 
 # Execute serial.out and measure execution time
 echo "Serial:"
@@ -16,7 +25,7 @@ echo "********"
 # Execute parallel.out and measure execution time
 echo "Parallel:"
 start_parallel=$(date +%s.%N)
-parallel/parallel.out "$arg1" "$arg2"
+parallel/parallel.out "$arg1" "$arg3"
 end_parallel=$(date +%s.%N)
 execution_time_parallel=$(echo "$end_parallel - $start_parallel" | bc)
 
