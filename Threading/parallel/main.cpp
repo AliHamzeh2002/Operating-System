@@ -23,11 +23,11 @@ const int NUM_THREADS = 8;
 class ThreadData{
 public:
     ThreadData(int start_row, int num_rows): start_row(start_row), num_rows(num_rows){};
-    // ThreadData(Image& img, int count, Kernel& kernel): img(img), count(count), kernel(kernel){};
-    // ThreadData(Image& img, int count, std::vector<double> ratios): img(img), count(count), ratios(ratios){};
+    ThreadData(int start_row, int num_rows, Kernel kernel): start_row(start_row), num_rows(num_rows),
+                                                                              kernel(kernel){};
+    Kernel kernel;
     int start_row;
     int num_rows;
-    std::vector<double> ratios;
 };
 
 
@@ -57,6 +57,7 @@ typedef struct tagBITMAPINFOHEADER {
 #pragma pack(pop)
 
 Image image;
+Image temp_image;
 char* file_buffer;
 int buffer_size;
 int rows;
@@ -181,16 +182,40 @@ void write_out_bmp24(const char* name_of_file) {
     write.write(file_buffer, buffer_size);
 }
 
-void v_reverse(Image& image) {
-    int num_rows = image.size();
-    int num_cols = image[0].size();
+void *v_reverse_thread(void* data){
+    ThreadData* thread_data = (ThreadData*)data;
+    int num_rows = thread_data->num_rows;
 
-    for (int i = 0; i < num_rows / 2; i++) {
-        for (int j = 0; j < num_cols; j++) {
-            Pixel temp_pixel = image[i][j];
-            image[i][j] = image[num_rows - i - 1][j];
-            image[num_rows - i - 1][j] = temp_pixel;
+    for (int i = 0; i < num_rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            Pixel temp_pixel = image[thread_data->start_row + i][j];
+            image[thread_data->start_row + i][j] = image[rows - thread_data->start_row - i - 1][j];
+            image[rows - thread_data->start_row - i - 1][j] = temp_pixel;
         }
+    }
+    pthread_exit(NULL);
+}
+
+void v_reverse(){
+    ThreadData* data[NUM_THREADS];
+    pthread_t threads[NUM_THREADS];
+    int start_row = 0;
+    int thread_num_rows = rows / (NUM_THREADS * 2);
+    for (int i = 0; i < NUM_THREADS; i++){
+        data[i] = new ThreadData(start_row, thread_num_rows);
+        if (i == NUM_THREADS - 1){
+            data[i]->num_rows += rows % (NUM_THREADS * 2);
+        }
+        int return_code = pthread_create(&threads[i], NULL, v_reverse_thread, (void*)data[i]);
+        if (return_code){
+            std::cout << "Error: unable to create thread, " << return_code << std::endl;
+            exit(-1);
+        }
+        start_row += thread_num_rows;
+
+    }
+    for (int i = 0; i < NUM_THREADS; i++){
+        pthread_join(threads[i], NULL);
     }
 }
 
@@ -231,27 +256,58 @@ void perform_kernel_on_pixel(int row, int col, Image& image, const Image& temp_i
 
 }
 
-void filter_kernel(Image& image, Kernel& kernel){
-    int num_rows = image.size();
-    int num_cols = image[0].size();
-    Image temp_image = image;
+void *filter_kernel_thread(void* data){
+    ThreadData* thread_data = (ThreadData*)data;
+    int num_rows = thread_data->num_rows;
+    Kernel kernel = thread_data->kernel;
 
     for (int i = 0; i < num_rows; i++){
-        for (int j = 0; j < num_cols; j++){
-            perform_kernel_on_pixel(i, j, image, temp_image, kernel);
+        for (int j = 0; j < cols; j++){
+            perform_kernel_on_pixel(thread_data->start_row + i, j, image, temp_image, kernel);
         }
+    }
+    pthread_exit(NULL);
+}
+
+void filter_kernel(Kernel& kernel){
+    int num_rows = image.size();
+    int num_cols = image[0].size();
+    temp_image = image;
+    
+    ThreadData* data[NUM_THREADS]; 
+    pthread_t threads[NUM_THREADS];
+    int start_row = 0;
+    int thread_num_rows = rows / NUM_THREADS;
+
+
+    for (int i = 0; i < NUM_THREADS; i++){
+        data[i] = new ThreadData(start_row, thread_num_rows, kernel);
+        if (i == NUM_THREADS - 1){
+            data[i]->num_rows += rows % NUM_THREADS;
+        }
+        int return_code = pthread_create(&threads[i], NULL, filter_kernel_thread, (void*)data[i]);
+        if (return_code){
+            std::cout << "Error: unable to create thread, " << return_code << std::endl;
+            exit(-1);
+        }
+        start_row += thread_num_rows;
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++){
+        pthread_join(threads[i], NULL);
     }
 }
 
-void purple_haze(Image& image){
-    int num_rows = image.size();
+void *purple_haze_thread(void* data){
+    ThreadData* thread_data = (ThreadData*)data;
+    int num_rows = thread_data->num_rows;
     int num_cols = image[0].size();
 
     for (int i = 0; i < num_rows; i++){
         for (int j = 0; j < num_cols; j++){
-            int blue = image[i][j].red * 0.16f + image[i][j].green * 0.5f + image[i][j].blue * 0.16f;
-            int red = image[i][j].red * 0.6f + image[i][j].green * 0.2f + image[i][j].blue * 0.8f;
-            int green = image[i][j].red * 0.5f + image[i][j].green * 0.3f + image[i][j].blue * 0.5f;
+            int green = image[thread_data->start_row + i][j].red * 0.16f + image[thread_data->start_row + i][j].green * 0.5f + image[thread_data->start_row + i][j].blue * 0.16f;
+            int blue = image[thread_data->start_row + i][j].red * 0.6f + image[thread_data->start_row + i][j].green * 0.2f + image[thread_data->start_row + i][j].blue * 0.8f;
+            int red = image[thread_data->start_row + i][j].red * 0.5f + image[thread_data->start_row + i][j].green * 0.3f + image[thread_data->start_row + i][j].blue * 0.5f;
             red = std::max(red, 0);
             green = std::max(green, 0);
             blue = std::max(blue, 0);
@@ -259,11 +315,41 @@ void purple_haze(Image& image){
             green = std::min(green, 255);
             blue = std::min(blue, 255);
     
-            image[i][j].red = (unsigned)red;
-            image[i][j].blue =(unsigned)blue;
-            image[i][j].green = (unsigned)green;
+            image[thread_data->start_row + i][j].red = (unsigned)red;
+            image[thread_data->start_row + i][j].blue =(unsigned)blue;
+            image[thread_data->start_row + i][j].green = (unsigned)green;
         }
     }
+    pthread_exit(NULL);
+}
+
+void purple_haze(){
+    int num_rows = image.size();
+    int num_cols = image[0].size();
+
+    ThreadData* data[NUM_THREADS];
+    pthread_t threads[NUM_THREADS];
+    int start_row = 0;
+    int thread_num_rows = rows / NUM_THREADS;
+
+    for (int i = 0; i < NUM_THREADS; i++){
+        data[i] = new ThreadData(start_row, thread_num_rows);
+        if (i == NUM_THREADS - 1){
+            data[i]->num_rows += rows % NUM_THREADS;
+        }
+        int return_code = pthread_create(&threads[i], NULL, purple_haze_thread, (void*)data[i]);
+        if (return_code){
+            std::cout << "Error: unable to create thread, " << return_code << std::endl;
+            exit(-1);
+        }
+        start_row += thread_num_rows;
+
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++){
+        pthread_join(threads[i], NULL);
+    }
+
 }
 
 void add_hatching(Image& image){
@@ -298,24 +384,24 @@ int main(int argc, char* argv[]) {
 
     get_pixels_from_bmp24();
     auto t2 = std::chrono::high_resolution_clock::now();
-    // v_reverse(image);
-    // auto t3 = std::chrono::high_resolution_clock::now();
-    // Kernel blur_filter = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
-    // Kernel test_filter = {{0, -1, 0}, {-1, 5, -1}, {0, -1, 0}};
-    // filter_kernel(image, blur_filter);
-    // auto t4 = std::chrono::high_resolution_clock::now();
-    // purple_haze(image);
-    // auto t5 = std::chrono::high_resolution_clock::now();
-    // add_hatching(image);
+    v_reverse();
+    Kernel blur_filter = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+    Kernel test_filter = {{0, -1, 0}, {-1, 5, -1}, {0, -1, 0}};
+    auto t3 = std::chrono::high_resolution_clock::now();
+    filter_kernel(blur_filter);
+    auto t4 = std::chrono::high_resolution_clock::now();
+    purple_haze();
+    auto t5 = std::chrono::high_resolution_clock::now();
+    add_hatching(image);
     auto t6 = std::chrono::high_resolution_clock::now();
     write_out_bmp24(argv[2]);
     auto t7 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Time to read: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms" << std::endl;
-    // std::cout << "Time to reverse: " << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "ms" << std::endl;
-    // std::cout << "Time to blur: " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << "ms" << std::endl;
-    // std::cout << "Time to purple haze: " << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count() <<  "ms" <<std::endl;
-    // std::cout << "Time to add hatching: " << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5).count() << "ms" << std::endl;
+    std::cout << "Time to reverse: " << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "ms" << std::endl;
+    std::cout << "Time to blur: " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << "ms" << std::endl;
+    std::cout << "Time to purple haze: " << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count() <<  "ms" <<std::endl;
+    std::cout << "Time to add hatching: " << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5).count() << "ms" << std::endl;
     std::cout << "Time to write: " << std::chrono::duration_cast<std::chrono::milliseconds>(t7 - t6).count() << "ms" << std::endl;
     std::cout << "Total time: " << std::chrono::duration_cast<std::chrono::milliseconds>(t7 - t1).count() << "ms" << std::endl;
 
