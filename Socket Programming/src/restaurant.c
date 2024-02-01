@@ -126,7 +126,7 @@ bool has_ingredients(Food* food){
 
 void make_food(Food* food){
     for (int i = 0; i < food->num_of_ingredients; i++){
-        increase_ingredient(food->ingredients[i].name, food->ingredients[i].quantity);
+        increase_ingredient(food->ingredients[i].name, -food->ingredients[i].quantity);
     }
 }
 
